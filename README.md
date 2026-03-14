@@ -44,7 +44,7 @@ Copy `.env.example` to `.env` and edit as needed:
 | `VOICEBOX_DEVICE` | `cpu` | `cpu` or `cuda` (auto-detected by `run.sh`) |
 | `VOICEBOX_PORT` | `17493` | Exposed port |
 | `VOICEBOX_MODEL` | `chatterbox-tts` | Model auto-downloaded at startup (set empty to skip) |
-| `NO_COLOR` | _(unset)_ | Disable colored output in `run.sh` when set |
+| `NO_COLOR` | _(unset)_ | Disable colored output (also auto-disabled when stdout is not a TTY; `--no-color` flag supported) |
 
 ## Integration in another project
 

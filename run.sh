@@ -10,8 +10,15 @@ cd "$SCRIPT_DIR"
 PORT="${VOICEBOX_PORT:-17493}"
 DEFAULT_MODEL="${VOICEBOX_MODEL:-chatterbox-tts}"
 
-# Colors (respect https://no-color.org/)
-if [[ -n "${NO_COLOR:-}" ]]; then
+# Parse --no-color flag
+for arg in "$@"; do
+    case "$arg" in
+        --no-color|--no-colors) NO_COLOR=1 ;;
+    esac
+done
+
+# Disable colors when NO_COLOR is set (https://no-color.org/) or stdout is not a terminal
+if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then
     RED='' GREEN='' YELLOW='' BLUE='' NC=''
 else
     RED='\033[0;31m'
@@ -129,16 +136,21 @@ if $USE_GPU; then
 fi
 
 # ── Summary ─────────────────────────────────────────────────
+COMPOSE_CMD="docker compose ${COMPOSE_FILES[*]}"
+
 echo ""
-echo -e "${GREEN}════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  Voicebox is ready!${NC}"
-echo -e "${GREEN}════════════════════════════════════════════${NC}"
+if [[ -n "$NC" ]]; then
+    echo -e "${GREEN}════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}  Voicebox is ready!${NC}"
+    echo -e "${GREEN}════════════════════════════════════════════${NC}"
+else
+    echo "Voicebox is ready!"
+fi
 echo ""
 echo -e "  Mode:   $( $USE_GPU && echo "${GREEN}GPU (CUDA)${NC}" || echo "${BLUE}CPU${NC}" )"
 echo -e "  Web UI: ${BLUE}http://localhost:${PORT}${NC}"
 echo -e "  API:    ${BLUE}http://localhost:${PORT}/docs${NC}"
 echo ""
-COMPOSE_CMD="docker compose ${COMPOSE_FILES[*]}"
 echo -e "  Useful commands:"
 echo -e "    ${COMPOSE_CMD} logs -f    # follow logs"
 echo -e "    ${COMPOSE_CMD} down       # stop"
