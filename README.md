@@ -90,14 +90,14 @@ All TTS models support zero-shot voice cloning from reference audio samples.
 
 | Model | Languages | Size | VRAM (GPU) | CPU | Notes |
 |-------|-----------|------|------------|-----|-------|
-| **chatterbox-tts** | 23 (en, fr, de, es, …) | ~2-3 GB | ~2 GB | Slow | Best multilingual quality & natural prosody |
+| **chatterbox-tts** | 23 (en, fr, de, es, …) | ~2-3 GB | ~2 GB | Slow | Natural prosody; non-English accents can be off (e.g. Quebec-like French) |
 | **chatterbox-turbo** | English only | ~1.5 GB | ~1.5 GB | Slow | Fastest Chatterbox; supports paralinguistic tags (`[laugh]`, `[cough]`, …) |
-| **qwen-tts-1.7B** | 23 (en, zh, ja, ko, …) | ~4 GB | ~4 GB | Very slow | Instruction-guided generation (`instruct` param) |
+| **qwen-tts-1.7B** | 23 (en, zh, ja, ko, …) | ~4 GB | ~4 GB | Very slow | Best non-English accent quality; instruction-guided generation |
 | **qwen-tts-0.6B** | Same as 1.7B | ~2 GB | ~2 GB | Slow | Lighter variant — good compromise for CPU |
 | **luxtts** | English | ~1 GB | ~1 GB | Fast | Most memory-efficient; 48 kHz output |
 
-> **CPU users**: prefer **luxtts** or **qwen-tts-0.6B** for usable generation speed.
-> **GPU users**: **chatterbox-tts** offers the best quality across languages.
+> **CPU users**: prefer **luxtts** (English) or **qwen-tts-0.6B** (multilingual) for usable generation speed.
+> **GPU users**: **chatterbox-tts** for English, **qwen-tts-1.7B** for other languages (more natural accents).
 
 ### STT (Speech-to-Text)
 
