@@ -1,0 +1,27 @@
+# Runtime data
+data/
+hf-cache/
+
+# Build artifacts
+build.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+
+# OS
+.DS_Store
+
+# Claude Code
+.claude/
+
+# Samples
+sample*/
+
+# Backup files
+*~
+*.bak

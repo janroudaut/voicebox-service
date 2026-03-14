@@ -1,0 +1,35 @@
+# Runtime data (bind-mounted at runtime)
+data/
+hf-cache/
+
+# Git
+.git/
+.gitignore
+.gitmodules
+voicebox/.git/
+
+# Tauri desktop app (not needed for Docker web build)
+voicebox/tauri/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# Claude Code
+.claude/
+
+# Logs
+*.log
+
+# Docker Compose & env
+docker-compose*.yml
+.env
+.env.example
+
+# Docs
+README.md
+LICENSE
+
+# Voice samples (user data, not part of the image)
+sample-voices/
