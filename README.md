@@ -82,6 +82,37 @@ volumes:
 
 For GPU support in the parent project, add the `deploy.resources` block from `docker-compose.gpu.yml`.
 
+## Available models
+
+### TTS (Text-to-Speech)
+
+All TTS models support zero-shot voice cloning from reference audio samples.
+
+| Model | Languages | Size | VRAM (GPU) | CPU | Notes |
+|-------|-----------|------|------------|-----|-------|
+| **chatterbox-tts** | 23 (en, fr, de, es, …) | ~2-3 GB | ~2 GB | Slow | Best multilingual quality & natural prosody |
+| **chatterbox-turbo** | English only | ~1.5 GB | ~1.5 GB | Slow | Fastest Chatterbox; supports paralinguistic tags (`[laugh]`, `[cough]`, …) |
+| **qwen-tts-1.7B** | 23 (en, zh, ja, ko, …) | ~4 GB | ~4 GB | Very slow | Instruction-guided generation (`instruct` param) |
+| **qwen-tts-0.6B** | Same as 1.7B | ~2 GB | ~2 GB | Slow | Lighter variant — good compromise for CPU |
+| **luxtts** | English | ~1 GB | ~1 GB | Fast | Most memory-efficient; 48 kHz output |
+
+> **CPU users**: prefer **luxtts** or **qwen-tts-0.6B** for usable generation speed.
+> **GPU users**: **chatterbox-tts** offers the best quality across languages.
+
+### STT (Speech-to-Text)
+
+Whisper models are used for audio transcription via the `/transcribe` endpoint.
+
+| Model | Size | VRAM (GPU) | CPU | Use case |
+|-------|------|------------|-----|----------|
+| **whisper-base** | ~140 MB | ~1 GB | Fast | Quick transcription, acceptable accuracy |
+| **whisper-small** | ~480 MB | ~2 GB | OK | Better accuracy, still reasonably fast |
+| **whisper-medium** | ~1.5 GB | ~5 GB | Slow | High accuracy |
+| **whisper-large** | ~3 GB | ~10 GB | Impractical | Highest accuracy — GPU required |
+| **whisper-turbo** | ~2 GB | ~6 GB | Slow | Near-large accuracy with faster inference |
+
+All Whisper models support 99 languages with automatic language detection.
+
 ## Access
 
 | Service | URL |
@@ -104,7 +135,7 @@ Interactive documentation is available at `/docs`. Below is an overview of the m
 | `POST` | `/models/unload` | Unload the current model |
 | `DELETE` | `/models/{model_name}` | Delete a downloaded model from disk |
 
-Available models: `chatterbox-tts`, `chatterbox-turbo`, `qwen-tts-1.7B`, `qwen-tts-0.6B`, `luxtts`, `whisper-base`, `whisper-small`, `whisper-medium`, `whisper-large`, `whisper-turbo`.
+See [Available models](#available-models) for the full list.
 
 ### Speech generation
 
