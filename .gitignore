@@ -28,3 +28,4 @@ sample*/
 
 # Docker image exports
 *.tar.gz
+*.tar.xz

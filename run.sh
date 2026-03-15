@@ -11,11 +11,11 @@ PORT="${VOICEBOX_PORT:-17493}"
 DEFAULT_TTS_MODEL="${VOICEBOX_TTS_MODEL:-qwen-tts-1.7B}"
 DEFAULT_STT_MODEL="${VOICEBOX_STT_MODEL:-whisper-turbo}"
 
-# Parse --no-color flag
+# Parse CLI flags
 for arg in "$@"; do
     case "$arg" in
         --no-color|--no-colors) NO_COLOR=1 ;;
-        --enable-flash-attn) export FLASH_ATTN=1 ;;
+        --enable-flash-attn)    export FLASH_ATTN=1 ;;
     esac
 done
 
