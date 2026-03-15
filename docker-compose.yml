@@ -10,7 +10,6 @@ services:
       - voicebox-data:/app/data
     environment:
       HF_HOME: /app/data/hf-cache
-      HF_HUB_DISABLE_XET: "1"
       NUMBA_CACHE_DIR: /tmp/numba_cache
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:17493/health"]
