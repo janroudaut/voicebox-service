@@ -4,10 +4,11 @@ services:
       context: .
       args:
         DEVICE: ${VOICEBOX_DEVICE:-cpu}
+        FLASH_ATTN: ${FLASH_ATTN:-0}
     ports:
       - "${VOICEBOX_PORT:-17493}:17493"
     volumes:
-      - voicebox-data:/app/data
+      - ${VOICEBOX_DATA:-voicebox-data}:/app/data
     environment:
       HF_HOME: /app/data/hf-cache
       NUMBA_CACHE_DIR: /tmp/numba_cache
