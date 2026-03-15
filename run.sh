@@ -8,12 +8,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 PORT="${VOICEBOX_PORT:-17493}"
-DEFAULT_MODEL="${VOICEBOX_MODEL:-chatterbox-tts}"
+DEFAULT_TTS_MODEL="${VOICEBOX_TTS_MODEL:-qwen-tts-1.7B}"
+DEFAULT_STT_MODEL="${VOICEBOX_STT_MODEL:-whisper-turbo}"
 
 # Parse --no-color flag
 for arg in "$@"; do
     case "$arg" in
         --no-color|--no-colors) NO_COLOR=1 ;;
+        --enable-flash-attn) export FLASH_ATTN=1 ;;
     esac
 done
 
@@ -74,6 +76,16 @@ else
     info "Mode: CPU"
 fi
 
+# ── Flash-attn handling ──────────────────────────────────────
+if [[ "${FLASH_ATTN:-0}" == "1" ]]; then
+    if ! $USE_GPU; then
+        info "flash-attn requested — forcing GPU (CUDA) mode."
+        USE_GPU=true
+        COMPOSE_FILES=(-f docker-compose.yml -f docker-compose.gpu.yml)
+    fi
+    warn "flash-attn enabled — first build will take ~15-20 min to compile CUDA kernels."
+fi
+
 # ── Build & start ────────────────────────────────────────────
 info "Building and starting Voicebox... this may take a while on first run."
 docker compose "${COMPOSE_FILES[@]}" up -d --build
@@ -105,20 +117,58 @@ fi
 
 ok "Voicebox server is healthy!"
 
-# ── Download default model ────────────────────────────────────
-if [ -n "$DEFAULT_MODEL" ]; then
-    info "Triggering download of default model '${DEFAULT_MODEL}'..."
-    DL_RESP=$(curl -sf -X POST "http://localhost:${PORT}/models/download" \
-        -H 'Content-Type: application/json' \
-        -d "{\"model_name\":\"${DEFAULT_MODEL}\"}" 2>&1) || true
+# ── Download default models ───────────────────────────────────
+download_model() {
+    local model_name="$1"
+    if [ -z "$model_name" ]; then return; fi
 
-    if echo "$DL_RESP" | grep -qi "already downloaded"; then
-        ok "Model '${DEFAULT_MODEL}' already downloaded"
-    elif echo "$DL_RESP" | grep -qi "error"; then
-        warn "Model download request failed: ${DL_RESP}"
+    info "Triggering download of '${model_name}'..."
+    local resp
+    resp=$(curl -sf -X POST "http://localhost:${PORT}/models/download" \
+        -H 'Content-Type: application/json' \
+        -d "{\"model_name\":\"${model_name}\"}" 2>&1) || true
+
+    if echo "$resp" | grep -qi "already downloaded"; then
+        ok "Model '${model_name}' already downloaded"
+    elif echo "$resp" | grep -qi "error"; then
+        warn "Model download request failed: ${resp}"
     else
-        ok "Model '${DEFAULT_MODEL}' download started in background"
+        ok "Model '${model_name}' download started in background"
     fi
+}
+
+wait_for_model() {
+    local model_name="$1"
+    local max_wait="${2:-300}"
+    local waited=0
+    info "Waiting for '${model_name}' to be ready..."
+    while [ $waited -lt $max_wait ]; do
+        local status
+        status=$(curl -sf "http://localhost:${PORT}/models/status" 2>/dev/null) || true
+        if echo "$status" | grep -q "\"model_name\":\"${model_name}\".*\"loaded\":true"; then
+            ok "Model '${model_name}' is ready"
+            return 0
+        fi
+        if echo "$status" | grep -q "\"model_name\":\"${model_name}\".*\"error\""; then
+            warn "Model '${model_name}' failed to load"
+            return 1
+        fi
+        sleep 3
+        waited=$((waited + 3))
+    done
+    warn "Timed out waiting for '${model_name}'"
+    return 1
+}
+
+if [ -n "$DEFAULT_STT_MODEL" ]; then
+    if [[ "$DEFAULT_STT_MODEL" == whisper-* && "$DEFAULT_STT_MODEL" != "whisper-base" ]]; then
+        download_model "whisper-base"
+        wait_for_model "whisper-base" 120
+    fi
+    download_model "$DEFAULT_STT_MODEL"
+fi
+if [ -n "$DEFAULT_TTS_MODEL" ]; then
+    download_model "$DEFAULT_TTS_MODEL"
 fi
 
 # ── Verify GPU inside container ─────────────────────────────
