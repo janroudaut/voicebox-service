@@ -15,6 +15,9 @@ cd voicebox-service
 
 # Auto-detects GPU — falls back to CPU if unavailable
 ./run.sh
+
+# Enable flash-attn (CUDA only — first build compiles kernels, ~15-20 min)
+./run.sh --enable-flash-attn
 ```
 
 The script will:
@@ -22,7 +25,7 @@ The script will:
 2. Build the Docker image (CPU or CUDA variant)
 3. Start the service via `docker compose`
 4. Wait for the healthcheck to pass
-5. Download the default TTS model (`chatterbox-tts`)
+5. Download STT models (`whisper-base` first as a prerequisite, then `whisper-turbo`) and the default TTS model (`qwen-tts-1.7B`)
 6. Verify GPU access (if applicable)
 
 ### Manual docker compose
@@ -37,13 +40,21 @@ docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
 
 ## Configuration
 
-Copy `.env.example` to `.env` and edit as needed:
+Copy `.env.example` to `.env` and edit as needed. Variables can also be passed inline:
+
+```bash
+VOICEBOX_DATA=./data ./run.sh
+FLASH_ATTN=1 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `VOICEBOX_DEVICE` | `cpu` | `cpu` or `cuda` (auto-detected by `run.sh`) |
+| `FLASH_ATTN` | `0` | Set to `1` to compile flash-attn (CUDA only, adds ~15-20 min to build) |
 | `VOICEBOX_PORT` | `17493` | Exposed port |
-| `VOICEBOX_MODEL` | `chatterbox-tts` | Model auto-downloaded at startup (set empty to skip) |
+| `VOICEBOX_TTS_MODEL` | `qwen-tts-1.7B` | TTS model auto-downloaded at startup (set empty to skip) |
+| `VOICEBOX_STT_MODEL` | `whisper-turbo` | STT model auto-downloaded at startup (set empty to skip) |
+| `VOICEBOX_DATA` | `voicebox-data` | Data storage: local path (e.g. `./data`) or Docker volume name |
 | `NO_COLOR` | _(unset)_ | Disable colored output (also auto-disabled when stdout is not a TTY; `--no-color` flag supported) |
 
 ## Integration in another project
@@ -62,11 +73,11 @@ services:
       context: ./services/voicebox
       args:
         DEVICE: ${VOICEBOX_DEVICE:-cpu}
+        FLASH_ATTN: ${FLASH_ATTN:-0}
     volumes:
-      - voicebox-data:/app/data
+      - ${VOICEBOX_DATA:-voicebox-data}:/app/data
     environment:
       HF_HOME: /app/data/hf-cache
-      HF_HUB_DISABLE_XET: "1"
       NUMBA_CACHE_DIR: /tmp/numba_cache
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:17493/health"]
@@ -206,11 +217,16 @@ See [Available models](#available-models) for the full list.
 
 ## Persistent data
 
-Data is stored in Docker named volumes:
+By default, data is stored in a Docker named volume (`voicebox-data`). To persist data on the host filesystem instead (survives `docker compose down -v` and image rebuilds):
 
-| Volume | Contents |
-|--------|----------|
-| `voicebox-data` | SQLite database, voice profiles, generated audio, HuggingFace model cache |
+```bash
+# In .env
+VOICEBOX_DATA=./data
+```
+
+| Contents |
+|----------|
+| SQLite database, voice profiles, generated audio, HuggingFace model cache |
 
 ## Useful commands
 
