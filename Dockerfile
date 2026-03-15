@@ -84,6 +84,17 @@ RUN pip install --no-cache-dir git+https://github.com/QwenLM/Qwen3-TTS.git
 # chatterbox-tts: installed --no-deps to avoid version pin conflicts
 RUN pip install --no-cache-dir --no-deps chatterbox-tts
 
+# flash-attn: faster transformer attention (CUDA only, opt-in)
+# Requires compiling CUDA kernels — adds ~15-20 min to build time.
+# Enable with: docker build --build-arg FLASH_ATTN=1
+ARG FLASH_ATTN=0
+RUN if [ "$FLASH_ATTN" = "1" ]; then \
+        apt-get update && apt-get install -y --no-install-recommends cuda-nvcc-12-6 ninja-build && \
+        rm -rf /var/lib/apt/lists/* && \
+        echo "Building flash-attn ($(nproc) CPUs available)" && \
+        nice -n 10 pip install --no-cache-dir flash-attn --no-build-isolation; \
+    fi
+
 # Create non-root user with UID/GID 1000 (matches typical host user)
 RUN groupadd -g 1000 voicebox 2>/dev/null || true && \
     useradd -u 1000 -g 1000 -m -s /bin/bash voicebox 2>/dev/null || true
