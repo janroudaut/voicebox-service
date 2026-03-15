@@ -40,7 +40,7 @@ RUN apt-get update && \
         python3.11 python3.11-venv python3.11-dev \
         pip \
         git build-essential \
-        ffmpeg curl \
+        ffmpeg curl sox \
     && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
@@ -55,7 +55,7 @@ FROM python:3.11-slim AS base-cpu
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         git build-essential \
-        ffmpeg curl \
+        ffmpeg curl sox \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTORCH_INDEX=https://download.pytorch.org/whl/cpu
