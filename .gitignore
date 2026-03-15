@@ -25,3 +25,6 @@ sample*/
 # Backup files
 *~
 *.bak
+
+# Docker image exports
+*.tar.gz

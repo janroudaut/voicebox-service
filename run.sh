@@ -122,18 +122,26 @@ download_model() {
     local model_name="$1"
     if [ -z "$model_name" ]; then return; fi
 
-    info "Triggering download of '${model_name}'..."
+    # Check if model is already downloaded and loaded via /models/status
+    local status
+    status=$(curl -sf "http://localhost:${PORT}/models/status" 2>/dev/null) || true
+    if echo "$status" | grep -q "\"model_name\":\"${model_name}\".*\"loaded\":true"; then
+        ok "Model '${model_name}' already loaded"
+        return 0
+    fi
+
+    info "Downloading/loading '${model_name}'..."
     local resp
     resp=$(curl -sf -X POST "http://localhost:${PORT}/models/download" \
         -H 'Content-Type: application/json' \
         -d "{\"model_name\":\"${model_name}\"}" 2>&1) || true
 
-    if echo "$resp" | grep -qi "already downloaded"; then
-        ok "Model '${model_name}' already downloaded"
-    elif echo "$resp" | grep -qi "error"; then
-        warn "Model download request failed: ${resp}"
+    if echo "$resp" | grep -qi "error"; then
+        warn "Model request failed: ${resp}"
+        return 1
     else
-        ok "Model '${model_name}' download started in background"
+        ok "Model '${model_name}' loading started"
+        return 0
     fi
 }
 
